@@ -89,7 +89,7 @@ Default value is MCP_16MHZ
 
 Note: To transfer data on high speed of CAN interface via UART dont forget to update UART baudrate as necessary.
 
-##2. Frame data format
+## 2. Frame data format
 
 Library uses Linux-like structure to store can frames;
 
@@ -141,7 +141,7 @@ mcp2515.sendMessage(MCP2515::TXB1, &frame);
 ```
 
 
-<br>
+
 ## 4. Receive Data
 
 The following function is used to receive data on the 'receive' node:
@@ -203,8 +203,8 @@ void loop() {
 }
 ```
 
-<br>
-##5. Set Receive Mask and Filter
+
+## 5. Set Receive Mask and Filter
 
 There are 2 receive mask registers and 5 filter registers on the controller chip that guarantee you get data from the target device. They are useful especially in a large network consisting of numerous nodes.
 
