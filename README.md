@@ -225,13 +225,13 @@ MCP2515::ERROR setFilter(const RXF num, const bool ext, const uint32_t ulData)
 
 
 
-<br>
+
 ## 6. Examples
 
 Example implementation of CanHacker (lawicel) protocol based device: [https://github.com/autowp/can-usb](https://github.com/autowp/can-usb)
 
-<br>
-For more information, please refer to [wiki page](http://www.seeedstudio.com/wiki/CAN-BUS_Shield).
+
+For more information, please refer to [wiki page](http://www.seeedstudio.com/wiki/CAN-BUS_Shield) .
 
     
 ----
