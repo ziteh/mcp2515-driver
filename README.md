@@ -17,7 +17,7 @@ CAN-BUS is a common industrial bus because of its long travel distance, medium c
 3. Restart the Arduino IDE to see the new "mcp2515" library with examples
 
 
-<br>
+
 # Usage:
 
 
@@ -153,7 +153,7 @@ MCP2515::ERROR readMessage(struct can_frame *frame);
 
 In conditions that masks and filters have been set. This function can only get frames that meet the requirements of masks and filters.
 
-You can choise one of two method to receive: interrup-based and polling
+You can choise one of two method to receive: interrupt-based and polling
 
 Example of poll read
 
