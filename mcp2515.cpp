@@ -336,6 +336,12 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
             cfg3 = MCP_16MHz_80kBPS_CFG3;
             break;
 
+            case (CAN_83K3BPS):                                              //  83.3333Kbps
+            cfg1 = MCP_16MHz_83k3BPS_CFG1;
+            cfg2 = MCP_16MHz_83k3BPS_CFG2;
+            cfg3 = MCP_16MHz_83k3BPS_CFG3;
+            break; 
+
             case (CAN_100KBPS):                                             // 100Kbps
             cfg1 = MCP_16MHz_100kBPS_CFG1;
             cfg2 = MCP_16MHz_100kBPS_CFG2;
