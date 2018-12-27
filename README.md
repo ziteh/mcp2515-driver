@@ -33,7 +33,7 @@ The following code samples uses the CAN-BUS Shield, wired up as shown:
 
 ## Do It Yourself
 
-If you want to make your own CAN board for under $5, you can achieve that with something like this:
+If you want to make your own CAN board for under $10, you can achieve that with something like this:
 
 ![MCP2515 with MCP2551 wiring](examples/wiring-diy.png)
 
