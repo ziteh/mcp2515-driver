@@ -10,6 +10,19 @@ CAN-BUS is a common industrial bus because of its long travel distance, medium c
 - Standard (11 bit) and extended (29 bit) data and remote frames
 - Two receive buffers with prioritized message storage
 
+**Contents:**
+* [Hardware](#hardware)
+   * [CAN Shield](#can-shield)
+   * [Do It Yourself](#do-it-yourself)
+* [Software Usage](#software-usage)
+   * [Library Installation](#library-installation)
+   * [Initialization](#initialization)
+   * [Frame data format](#frame-data-format)
+   * [Send Data](#send-data)
+   * [Receive Data](#receive-data)
+   * [Set Receive Mask and Filter](#set-receive-mask-and-filter)
+   * [Examples](#examples)
+
 # Hardware:
 
 ## CAN Shield
@@ -29,9 +42,6 @@ Component References:
 * [MCP2551](https://www.microchip.com/wwwproducts/en/MCP2551) High-speed CAN Transceiver - pictured above, however "not recommended for new designs"
 * [MCP2562](https://www.microchip.com/wwwproducts/en/MCP2562) High-speed CAN Transceiver with Standby Mode and VIO Pin - an updated tranceiver since the _MCP2551_
 
-
-**1 x MCP2551 CAN Tranceiver**
-* A CAN Tranceiver (such as an MCP2562)
 
 # Software Usage:
 
@@ -108,7 +118,7 @@ Default value is MCP_16MHZ
 
 Note: To transfer data on high speed of CAN interface via UART dont forget to update UART baudrate as necessary.
 
-## 2. Frame data format
+## Frame data format
 
 Library uses Linux-like structure to store can frames;
 
@@ -122,7 +132,7 @@ struct can_frame {
 
 For additional information see [SocketCAN](https://www.kernel.org/doc/Documentation/networking/can.txt)
 
-## 3. Send Data
+## Send Data
 
 ```C++
 MCP2515::ERROR sendMessage(const MCP2515::TXBn txbn, const struct can_frame *frame);
@@ -161,7 +171,7 @@ mcp2515.sendMessage(MCP2515::TXB1, &frame);
 
 
 
-## 4. Receive Data
+## Receive Data
 
 The following function is used to receive data on the 'receive' node:
 
@@ -223,7 +233,7 @@ void loop() {
 ```
 
 
-## 5. Set Receive Mask and Filter
+## Set Receive Mask and Filter
 
 There are 2 receive mask registers and 5 filter registers on the controller chip that guarantee you get data from the target device. They are useful especially in a large network consisting of numerous nodes.
 
@@ -243,9 +253,7 @@ MCP2515::ERROR setFilter(const RXF num, const bool ext, const uint32_t ulData)
 **ulData** represents the content of the mask of filter.
 
 
-
-
-## 6. Examples
+## Examples
 
 Example implementation of CanHacker (lawicel) protocol based device: [https://github.com/autowp/can-usb](https://github.com/autowp/can-usb)
 
