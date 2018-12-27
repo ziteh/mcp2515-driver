@@ -19,7 +19,7 @@ CAN-BUS is a common industrial bus because of its long travel distance, medium c
 
 # Hardware:
 
-![MCP2515 wiring example][examples/wiring.png]
+![MCP2515 wiring example](examples/wiring.png)
 
 # Software Usage:
 
