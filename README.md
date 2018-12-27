@@ -3,12 +3,37 @@ Arduino MCP2515 CAN interface library
 
 
 <br>
-CAN-BUS is a common industrial bus because of its long travel distance, medium communication speed and high reliability. It is commonly found on modern machine tools and as an automotive diagnostic bus. This CAN-BUS Shield adopts MCP2515 CAN Bus controller with SPI interface and MCP2551 CAN transceiver to give your Arduino/Seeeduino CAN-BUS capibility. With an OBD-II converter cable added on and the OBD-II library imported, you are ready to build an onboard diagnostic device or data logger.
+CAN-BUS is a common industrial bus because of its long travel distance, medium communication speed and high reliability. It is commonly found on modern machine tools and as an automotive diagnostic bus. This CAN-BUS Shield gives your Arduino/Seeeduino CAN-BUS capibility. With an OBD-II converter cable added on and the OBD-II library imported, you are ready to build an onboard diagnostic device or data logger.
 
 - Implements CAN V2.0B at up to 1 Mb/s
 - SPI Interface up to 10 MHz
 - Standard (11 bit) and extended (29 bit) data and remote frames
 - Two receive buffers with prioritized message storage
+
+# Hardware:
+
+## CAN Shield
+
+The following code samples uses the CAN-BUS Shield, wired up as shown:
+
+![MCP2515 CAN-Shield wiring](examples/wiring.png)
+
+## Do It Yourself
+
+If you want to make your own CAN board for under $5, you can achieve that with something like this:
+
+![MCP2515 with MCP2551 wiring](examples/wiring-diy.png)
+
+Component References:
+* [MCP2515](https://www.microchip.com/wwwproducts/en/MCP2515) Stand-Alone CAN Controller with SPI Interface
+* [MCP2551](https://www.microchip.com/wwwproducts/en/MCP2551) High-speed CAN Transceiver - pictured above, however "not recommended for new designs"
+* [MCP2562](https://www.microchip.com/wwwproducts/en/MCP2562) High-speed CAN Transceiver with Standby Mode and VIO Pin - an updated tranceiver since the _MCP2551_
+
+
+**1 x MCP2551 CAN Tranceiver**
+* A CAN Tranceiver (such as an MCP2562)
+
+# Software Usage:
 
 ## Library Installation
 
@@ -16,14 +41,7 @@ CAN-BUS is a common industrial bus because of its long travel distance, medium c
 2. From the Arduino IDE: Sketch -> Include Library... -> Add .ZIP Library...
 3. Restart the Arduino IDE to see the new "mcp2515" library with examples
 
-
-# Hardware:
-
-![MCP2515 wiring example](examples/wiring.png)
-
-# Software Usage:
-
-## 1. Initialization
+## Initialization
 
 To create connection with MCP2515 provide pin number where SPI CS is connected (10 by default), baudrate and mode
 
