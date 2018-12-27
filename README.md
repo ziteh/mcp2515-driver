@@ -3,12 +3,48 @@ Arduino MCP2515 CAN interface library
 
 
 <br>
-CAN-BUS is a common industrial bus because of its long travel distance, medium communication speed and high reliability. It is commonly found on modern machine tools and as an automotive diagnostic bus. This CAN-BUS Shield adopts MCP2515 CAN Bus controller with SPI interface and MCP2551 CAN transceiver to give your Arduino/Seeeduino CAN-BUS capibility. With an OBD-II converter cable added on and the OBD-II library imported, you are ready to build an onboard diagnostic device or data logger.
+CAN-BUS is a common industrial bus because of its long travel distance, medium communication speed and high reliability. It is commonly found on modern machine tools and as an automotive diagnostic bus. This CAN-BUS Shield gives your Arduino/Seeeduino CAN-BUS capibility. With an OBD-II converter cable added on and the OBD-II library imported, you are ready to build an onboard diagnostic device or data logger.
 
 - Implements CAN V2.0B at up to 1 Mb/s
 - SPI Interface up to 10 MHz
 - Standard (11 bit) and extended (29 bit) data and remote frames
 - Two receive buffers with prioritized message storage
+
+**Contents:**
+* [Hardware](#hardware)
+   * [CAN Shield](#can-shield)
+   * [Do It Yourself](#do-it-yourself)
+* [Software Usage](#software-usage)
+   * [Library Installation](#library-installation)
+   * [Initialization](#initialization)
+   * [Frame data format](#frame-data-format)
+   * [Send Data](#send-data)
+   * [Receive Data](#receive-data)
+   * [Set Receive Mask and Filter](#set-receive-mask-and-filter)
+   * [Examples](#examples)
+
+# Hardware:
+
+## CAN Shield
+
+The following code samples uses the CAN-BUS Shield, wired up as shown:
+
+![MCP2515 CAN-Shield wiring](examples/wiring.png)
+
+## Do It Yourself
+
+If you want to make your own CAN board for under $10, you can achieve that with something like this:
+
+![MCP2515 with MCP2551 wiring](examples/wiring-diy.png)
+
+Component References:
+* [MCP2515](https://www.microchip.com/wwwproducts/en/MCP2515) Stand-Alone CAN Controller with SPI Interface
+* [MCP2551](https://www.microchip.com/wwwproducts/en/MCP2551) High-speed CAN Transceiver - pictured above, however "not recommended for new designs"
+* [MCP2562](https://www.microchip.com/wwwproducts/en/MCP2562) High-speed CAN Transceiver with Standby Mode and VIO Pin - an updated tranceiver since the _MCP2551_ (requires different wiring, read datasheet for example, also [here](https://fragmuffin.github.io/howto-micropython/slides/index.html#/7/5))
+* [TJA1055](https://www.nxp.com/docs/en/data-sheet/TJA1055.pdf) Fault-tolerant low speed CAN Transceiver. Mostly used in vehicles.
+
+
+# Software Usage:
 
 ## Library Installation
 
@@ -16,13 +52,7 @@ CAN-BUS is a common industrial bus because of its long travel distance, medium c
 2. From the Arduino IDE: Sketch -> Include Library... -> Add .ZIP Library...
 3. Restart the Arduino IDE to see the new "mcp2515" library with examples
 
-
-
-# Usage:
-
-
-
-## 1. Initialization
+## Initialization
 
 To create connection with MCP2515 provide pin number where SPI CS is connected (10 by default), baudrate and mode
 
@@ -89,7 +119,7 @@ Default value is MCP_16MHZ
 
 Note: To transfer data on high speed of CAN interface via UART dont forget to update UART baudrate as necessary.
 
-## 2. Frame data format
+## Frame data format
 
 Library uses Linux-like structure to store can frames;
 
@@ -103,14 +133,14 @@ struct can_frame {
 
 For additional information see [SocketCAN](https://www.kernel.org/doc/Documentation/networking/can.txt)
 
-## 3. Send Data
+## Send Data
 
 ```C++
 MCP2515::ERROR sendMessage(const MCP2515::TXBn txbn, const struct can_frame *frame);
 MCP2515::ERROR sendMessage(const struct can_frame *frame);
 ```
 
-This is a function to send data onto the bus. 
+This is a function to send data onto the bus.
 
 For example, In the 'send' example, we have:
 
@@ -123,7 +153,7 @@ frame.data[1] = 0xFF;
 frame.data[2] = 0xFF;
 frame.data[3] = 0xFF;
 
-/* send out the message to the bus and 
+/* send out the message to the bus and
 tell other devices this is a standard frame from 0x00. */
 mcp2515.sendMessage(&frame);
 ```
@@ -135,14 +165,14 @@ frame.can_dlc = 2;
 frame.data[0] = 0xFF;
 frame.data[1] = 0xFF;
 
-/* send out the message to the bus using second TX buffer and 
+/* send out the message to the bus using second TX buffer and
 tell other devices this is a extended frame from 0x12345678. */
 mcp2515.sendMessage(MCP2515::TXB1, &frame);
 ```
 
 
 
-## 4. Receive Data
+## Receive Data
 
 The following function is used to receive data on the 'receive' node:
 
@@ -172,28 +202,28 @@ Example of interrupt based read
 ```C++
 bool interrupt = false;
 struct can_frame frame;
-	
+
 void irqHandler() {
     interrupt = true;
 }
-	
+
 void setup() {
     ...
     attachInterrupt(0, irqHandler, FALLING);
 }
-	
+
 void loop() {
     if (interrupt) {
         interrupt = false;
-       
+
         uint8_t irq = mcp2515.getInterrupts();
-        
+
         if (irq & MCP2515::CANINTF_RX0IF) {
             if (mcp2515.readMessage(MCP2515::RXB0, &frame) == MCP2515::ERROR_OK) {
                 // frame contains received from RXB0 message
             }
         }
-            
+
         if (irq & MCP2515::CANINTF_RX1IF) {
             if (mcp2515.readMessage(MCP2515::RXB1, &frame) == MCP2515::ERROR_OK) {
                 // frame contains received from RXB1 message
@@ -204,7 +234,7 @@ void loop() {
 ```
 
 
-## 5. Set Receive Mask and Filter
+## Set Receive Mask and Filter
 
 There are 2 receive mask registers and 5 filter registers on the controller chip that guarantee you get data from the target device. They are useful especially in a large network consisting of numerous nodes.
 
@@ -224,16 +254,14 @@ MCP2515::ERROR setFilter(const RXF num, const bool ext, const uint32_t ulData)
 **ulData** represents the content of the mask of filter.
 
 
-
-
-## 6. Examples
+## Examples
 
 Example implementation of CanHacker (lawicel) protocol based device: [https://github.com/autowp/can-usb](https://github.com/autowp/can-usb)
 
 
 For more information, please refer to [wiki page](http://www.seeedstudio.com/wiki/CAN-BUS_Shield) .
 
-    
+
 ----
 
 This software is written by loovee ([luweicong@seeed.cc](luweicong@seeed.cc "luweicong@seeed.cc")) for seeed studio,<br>
