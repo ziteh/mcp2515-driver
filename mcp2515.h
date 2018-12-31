@@ -234,6 +234,18 @@ class MCP2515
             CANINTF_MERRF = 0x80
         };
 
+        enum /*class*/ EFLG : uint8_t {
+            EFLG_RX1OVR = (1<<7),
+            EFLG_RX0OVR = (1<<6),
+            EFLG_TXBO   = (1<<5),
+            EFLG_TXEP   = (1<<4),
+            EFLG_RXEP   = (1<<3),
+            EFLG_TXWAR  = (1<<2),
+            EFLG_RXWAR  = (1<<1),
+            EFLG_EWARN  = (1<<0)
+        };
+
+
     private:
         static const uint8_t CANCTRL_REQOP = 0xE0;
         static const uint8_t CANCTRL_ABAT = 0x10;
@@ -260,6 +272,7 @@ class MCP2515
         static const uint8_t RXBnCTRL_RXM_STD    = 0x20;
         static const uint8_t RXBnCTRL_RXM_EXT    = 0x40;
         static const uint8_t RXBnCTRL_RXM_STDEXT = 0x00;
+        static const uint8_t RXBnCTRL_RXM_ANY    = 0x60;
         static const uint8_t RXBnCTRL_RXM_MASK   = 0x60;
         static const uint8_t RXBnCTRL_RTR        = 0x08;
         static const uint8_t RXB0CTRL_BUKT       = 0x04;
@@ -285,17 +298,6 @@ class MCP2515
             TXB_TXREQ  = 0x08,
             TXB_TXIE   = 0x04,
             TXB_TXP    = 0x03
-        };
-
-        enum /*class*/ EFLG : uint8_t {
-            EFLG_RX1OVR = (1<<7),
-            EFLG_RX0OVR = (1<<6),
-            EFLG_TXBO   = (1<<5),
-            EFLG_TXEP   = (1<<4),
-            EFLG_RXEP   = (1<<3),
-            EFLG_TXWAR  = (1<<2),
-            EFLG_RXWAR  = (1<<1),
-            EFLG_EWARN  = (1<<0)
         };
 
         static const uint8_t EFLG_ERRORMASK = EFLG_RX1OVR
@@ -464,6 +466,7 @@ class MCP2515
         uint8_t getStatus(void);
         void clearRXnOVR(void);
         void clearMERR();
+        void clearERRIF();
 };
 
 #endif
