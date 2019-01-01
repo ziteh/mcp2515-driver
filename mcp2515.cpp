@@ -697,3 +697,10 @@ void MCP2515::clearMERR()
 	//clearInterrupts();
 	modifyRegister(MCP_CANINTF, CANINTF_MERRF, 0);
 }
+
+void MCP2515::clearERRIF()
+{
+    //modifyRegister(MCP_EFLG, EFLG_RX0OVR | EFLG_RX1OVR, 0);
+    //clearInterrupts();
+    modifyRegister(MCP_CANINTF, CANINTF_ERRIF, 0);
+}
