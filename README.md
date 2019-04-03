@@ -160,7 +160,7 @@ mcp2515.sendMessage(&frame);
 
 ```C++
 struct can_frame frame;
-frame.can_id = 0x12345678 | CAN_EFF_MASK;
+frame.can_id = 0x12345678 | CAN_EFF_FLAG;
 frame.can_dlc = 2;
 frame.data[0] = 0xFF;
 frame.data[1] = 0xFF;
