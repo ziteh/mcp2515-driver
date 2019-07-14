@@ -464,6 +464,31 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
     }
 }
 
+MCP2515::ERROR MCP2515::setClkOut(const CAN_CLKOUT divisor)
+{
+    ERROR res;
+    uint8_t cfg3;
+
+    if (divisor == CLKOUT_DISABLE) {
+	/* Turn off CLKEN */
+	modifyRegister(MCP_CANCTRL, CANCTRL_CLKEN, 0x00);
+
+	/* Turn on CLKOUT for SOF */
+	modifyRegister(MCP_CNF3, CNF3_SOF, CNF3_SOF);
+        return ERROR_OK;
+    }
+
+    /* Set the prescaler (CLKPRE) */
+    modifyRegister(MCP_CANCTRL, CANCTRL_CLKPRE, divisor);
+
+    /* Turn on CLKEN */
+    modifyRegister(MCP_CANCTRL, CANCTRL_CLKEN, CANCTRL_CLKEN);
+
+    /* Turn off CLKOUT for SOF */
+    modifyRegister(MCP_CNF3, CNF3_SOF, 0x00);
+    return ERROR_OK;
+}
+
 void MCP2515::prepareId(uint8_t *buffer, const bool ext, const uint32_t id)
 {
     uint16_t canid = (uint16_t)(id & 0x0FFFF);

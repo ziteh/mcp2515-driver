@@ -186,6 +186,14 @@ enum CAN_SPEED {
     CAN_1000KBPS
 };
 
+enum CAN_CLKOUT {
+    CLKOUT_DISABLE = -1,
+    CLKOUT_DIV1 = 0x0,
+    CLKOUT_DIV2 = 0x1,
+    CLKOUT_DIV4 = 0x2,
+    CLKOUT_DIV8 = 0x3,
+};
+
 class MCP2515
 {
     public:
@@ -263,6 +271,8 @@ class MCP2515
 
         static const uint8_t CANSTAT_OPMOD = 0xE0;
         static const uint8_t CANSTAT_ICOD = 0x0E;
+
+        static const uint8_t CNF3_SOF = 0x80;
 
         static const uint8_t TXB_EXIDE_MASK = 0x08;
         static const uint8_t DLC_MASK       = 0x0F;
@@ -446,6 +456,7 @@ class MCP2515
         ERROR setSleepMode();
         ERROR setLoopbackMode();
         ERROR setNormalMode();
+        ERROR setClkOut(const CAN_CLKOUT divisor);
         ERROR setBitrate(const CAN_SPEED canSpeed);
         ERROR setBitrate(const CAN_SPEED canSpeed, const CAN_CLOCK canClock);
         ERROR setFilterMask(const MASK num, const bool ext, const uint32_t ulData);
