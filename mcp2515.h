@@ -149,6 +149,10 @@
 #define MCP_20MHz_100kBPS_CFG2 (0xFA)
 #define MCP_20MHz_100kBPS_CFG3 (0x87)
 
+#define MCP_20MHz_83k3BPS_CFG1 (0x04)
+#define MCP_20MHz_83k3BPS_CFG2 (0xFE)
+#define MCP_20MHz_83k3BPS_CFG3 (0x87)
+
 #define MCP_20MHz_80kBPS_CFG1 (0x04)
 #define MCP_20MHz_80kBPS_CFG2 (0xFF)
 #define MCP_20MHz_80kBPS_CFG3 (0x87)
@@ -160,6 +164,10 @@
 #define MCP_20MHz_40kBPS_CFG1 (0x09)
 #define MCP_20MHz_40kBPS_CFG2 (0xFF)
 #define MCP_20MHz_40kBPS_CFG3 (0x87)
+
+#define MCP_20MHz_33k3BPS_CFG1 (0x0B)
+#define MCP_20MHz_33k3BPS_CFG2 (0xFF)
+#define MCP_20MHz_33k3BPS_CFG3 (0x87)
 
 enum CAN_CLOCK {
     MCP_20MHZ,
@@ -184,6 +192,14 @@ enum CAN_SPEED {
     CAN_250KBPS,
     CAN_500KBPS,
     CAN_1000KBPS
+};
+
+enum CAN_CLKOUT {
+    CLKOUT_DISABLE = -1,
+    CLKOUT_DIV1 = 0x0,
+    CLKOUT_DIV2 = 0x1,
+    CLKOUT_DIV4 = 0x2,
+    CLKOUT_DIV8 = 0x3,
 };
 
 class MCP2515
@@ -264,6 +280,8 @@ class MCP2515
         static const uint8_t CANSTAT_OPMOD = 0xE0;
         static const uint8_t CANSTAT_ICOD = 0x0E;
 
+        static const uint8_t CNF3_SOF = 0x80;
+
         static const uint8_t TXB_EXIDE_MASK = 0x08;
         static const uint8_t DLC_MASK       = 0x0F;
         static const uint8_t RTR_MASK       = 0x40;
@@ -297,7 +315,6 @@ class MCP2515
             TXB_TXIE   = 0x04,
             TXB_TXP    = 0x03
         };
-
 
         static const uint8_t EFLG_ERRORMASK = EFLG_RX1OVR
                                             | EFLG_RX0OVR
@@ -446,6 +463,7 @@ class MCP2515
         ERROR setSleepMode();
         ERROR setLoopbackMode();
         ERROR setNormalMode();
+        ERROR setClkOut(const CAN_CLKOUT divisor);
         ERROR setBitrate(const CAN_SPEED canSpeed);
         ERROR setBitrate(const CAN_SPEED canSpeed, const CAN_CLOCK canClock);
         ERROR setFilterMask(const MASK num, const bool ext, const uint32_t ulData);
