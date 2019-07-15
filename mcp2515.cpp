@@ -226,7 +226,7 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
             cfg3 = MCP_8MHz_31k25BPS_CFG3;
             break;
 
-            case (CAN_33KBPS):                                             //  33.33KBPS
+            case (CAN_33KBPS):                                              //  33.333KBPS
             cfg1 = MCP_8MHz_33k3BPS_CFG1;
             cfg2 = MCP_8MHz_33k3BPS_CFG2;
             cfg3 = MCP_8MHz_33k3BPS_CFG3;
@@ -313,7 +313,7 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
             cfg3 = MCP_16MHz_20kBPS_CFG3;
             break;
 
-            case (CAN_33KBPS):                                              //  20Kbps
+            case (CAN_33KBPS):                                              //  33.333Kbps
             cfg1 = MCP_16MHz_33k3BPS_CFG1;
             cfg2 = MCP_16MHz_33k3BPS_CFG2;
             cfg3 = MCP_16MHz_33k3BPS_CFG3;
@@ -336,7 +336,7 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
             cfg3 = MCP_16MHz_80kBPS_CFG3;
             break;
 
-            case (CAN_83K3BPS):                                              //  83.3333Kbps
+            case (CAN_83K3BPS):                                             //  83.333Kbps
             cfg1 = MCP_16MHz_83k3BPS_CFG1;
             cfg2 = MCP_16MHz_83k3BPS_CFG2;
             cfg3 = MCP_16MHz_83k3BPS_CFG3;
@@ -387,6 +387,12 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
         case (MCP_20MHZ):
         switch (canSpeed)
         {
+            case (CAN_33KBPS):                                              //  33.333Kbps
+            cfg1 = MCP_20MHz_33k3BPS_CFG1;
+            cfg2 = MCP_20MHz_33k3BPS_CFG2;
+            cfg3 = MCP_20MHz_33k3BPS_CFG3;
+	    break;
+
             case (CAN_40KBPS):                                              //  40Kbps
             cfg1 = MCP_20MHz_40kBPS_CFG1;
             cfg2 = MCP_20MHz_40kBPS_CFG2;
@@ -404,6 +410,12 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
             cfg2 = MCP_20MHz_80kBPS_CFG2;
             cfg3 = MCP_20MHz_80kBPS_CFG3;
             break;
+
+            case (CAN_83K3BPS):                                             //  83.333Kbps
+            cfg1 = MCP_20MHz_83k3BPS_CFG1;
+            cfg2 = MCP_20MHz_83k3BPS_CFG2;
+            cfg3 = MCP_20MHz_83k3BPS_CFG3;
+	    break;
 
             case (CAN_100KBPS):                                             // 100Kbps
             cfg1 = MCP_20MHz_100kBPS_CFG1;
@@ -451,7 +463,6 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
         set = 0;
         break;
     }
-
 
     if (set) {
         setRegister(MCP_CNF1, cfg1);

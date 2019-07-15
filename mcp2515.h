@@ -149,6 +149,10 @@
 #define MCP_20MHz_100kBPS_CFG2 (0xFA)
 #define MCP_20MHz_100kBPS_CFG3 (0x87)
 
+#define MCP_20MHz_83k3BPS_CFG1 (0x04)
+#define MCP_20MHz_83k3BPS_CFG2 (0xFE)
+#define MCP_20MHz_83k3BPS_CFG3 (0x87)
+
 #define MCP_20MHz_80kBPS_CFG1 (0x04)
 #define MCP_20MHz_80kBPS_CFG2 (0xFF)
 #define MCP_20MHz_80kBPS_CFG3 (0x87)
@@ -160,6 +164,10 @@
 #define MCP_20MHz_40kBPS_CFG1 (0x09)
 #define MCP_20MHz_40kBPS_CFG2 (0xFF)
 #define MCP_20MHz_40kBPS_CFG3 (0x87)
+
+#define MCP_20MHz_33k3BPS_CFG1 (0x0B)
+#define MCP_20MHz_33k3BPS_CFG2 (0xFF)
+#define MCP_20MHz_33k3BPS_CFG3 (0x87)
 
 enum CAN_CLOCK {
     MCP_20MHZ,
@@ -307,7 +315,6 @@ class MCP2515
             TXB_TXIE   = 0x04,
             TXB_TXP    = 0x03
         };
-
 
         static const uint8_t EFLG_ERRORMASK = EFLG_RX1OVR
                                             | EFLG_RX0OVR
