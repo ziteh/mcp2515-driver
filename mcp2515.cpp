@@ -478,9 +478,6 @@ MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)
 
 MCP2515::ERROR MCP2515::setClkOut(const CAN_CLKOUT divisor)
 {
-    ERROR res;
-    uint8_t cfg3;
-
     if (divisor == CLKOUT_DISABLE) {
 	/* Turn off CLKEN */
 	modifyRegister(MCP_CANCTRL, CANCTRL_CLKEN, 0x00);
