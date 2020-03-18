@@ -610,7 +610,7 @@ MCP2515::ERROR MCP2515::sendMessage(const struct can_frame *frame)
         }
     }
 
-    return ERROR_FAILTX;
+    return ERROR_ALLTXBUSY;
 }
 
 MCP2515::ERROR MCP2515::readMessage(const RXBn rxbn, struct can_frame *frame)
