@@ -59,9 +59,12 @@ MCP2515::ERROR MCP2515::reset(void)
                    RXBnCTRL_RXM_STDEXT | RXB1CTRL_FILHIT);
 
     // clear filters and masks
-    /*RXF filters[] = {RXF0, RXF1, RXF2, RXF3, RXF4, RXF5};
+    // do not filter any standard frames for RXF0 used by RXB0
+    // do not filter any extended frames for RXF1 used by RXB1
+    RXF filters[] = {RXF0, RXF1, RXF2, RXF3, RXF4, RXF5};
     for (int i=0; i<6; i++) {
-        ERROR result = setFilter(filters[i], true, 0);
+        bool ext = (i == 1);
+        ERROR result = setFilter(filters[i], ext, 0);
         if (result != ERROR_OK) {
             return result;
         }
@@ -73,7 +76,7 @@ MCP2515::ERROR MCP2515::reset(void)
         if (result != ERROR_OK) {
             return result;
         }
-    }*/
+    }
 
     return ERROR_OK;
 }
