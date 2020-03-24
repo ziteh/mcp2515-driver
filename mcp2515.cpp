@@ -599,6 +599,10 @@ MCP2515::ERROR MCP2515::sendMessage(const TXBn txbn, const struct can_frame *fra
 
     modifyRegister(txbuf->CTRL, TXB_TXREQ, TXB_TXREQ);
 
+    uint8_t ctrl = readRegister(txbuf->CTRL);
+    if ((ctrl & (TXB_ABTF | TXB_MLOA | TXB_TXERR)) != 0) {
+        return ERROR_FAILTX;
+    }
     return ERROR_OK;
 }
 
@@ -618,7 +622,7 @@ MCP2515::ERROR MCP2515::sendMessage(const struct can_frame *frame)
         }
     }
 
-    return ERROR_FAILTX;
+    return ERROR_ALLTXBUSY;
 }
 
 MCP2515::ERROR MCP2515::readMessage(const RXBn rxbn, struct can_frame *frame)
