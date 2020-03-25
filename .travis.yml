@@ -1,10 +1,19 @@
 language: c
+sudo: false
 
 addons:
-  sonarcloud:
-    organization: "autowp-github"
-    token:
-      secure: $SONARCLOUD_TOKEN
+  apt:
+    sources:
+      - llvm-toolchain-trusty-5.0
+      - key_url: 'http://apt.llvm.org/llvm-snapshot.gpg.key'
 
 script:
-  - sonar-scanner || travis_terminate 1;
+  - build_main_platforms
+  
+before_install:
+  - source <(curl -SLs https://raw.githubusercontent.com/adafruit/travis-ci-arduino/master/install.sh)
+
+cache:
+  directories:
+    - ~/arduino_ide
+    - ~/.arduino15/packages/
