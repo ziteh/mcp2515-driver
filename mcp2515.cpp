@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include "mcp2515.h"
 
 const struct MCP2515::TXBn_REGS MCP2515::TXB[MCP2515::N_TXBUFFERS] = {
