@@ -9,7 +9,6 @@ unsigned long oldTime = 0;
  
 void setup() {
   Serial.begin(115200);
-  SPI.begin();
  
   mcp2515.reset();
   mcp2515.setBitrate(CAN_125KBPS);
@@ -19,7 +18,6 @@ void setup() {
 }
  
 void loop() {
- 
   if (mcp2515.readMessage(&canMsg) == MCP2515::ERROR_OK) {
     cntr++;
   }
@@ -30,5 +28,4 @@ void loop() {
     Serial.println(" msg/sec");
     cntr = 0;      
   }
- 
 }
