@@ -7,7 +7,6 @@ MCP2515 mcp2515(10);
 
 
 void setup() {
-
   canMsg1.can_id  = 0x0F6;
   canMsg1.can_dlc = 8;
   canMsg1.data[0] = 0x8E;
@@ -32,7 +31,6 @@ void setup() {
   
   while (!Serial);
   Serial.begin(115200);
-  SPI.begin();
   
   mcp2515.reset();
   mcp2515.setBitrate(CAN_125KBPS);
@@ -42,12 +40,10 @@ void setup() {
 }
 
 void loop() {
-  
   mcp2515.sendMessage(&canMsg1);
   mcp2515.sendMessage(&canMsg2);
 
   Serial.println("Messages sent");
   
   delay(100);
-
 }
