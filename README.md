@@ -200,7 +200,7 @@ void loop() {
 Example of interrupt based read
 
 ```C++
-bool interrupt = false;
+volatile bool interrupt = false;
 struct can_frame frame;
 
 void irqHandler() {
