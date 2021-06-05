@@ -754,3 +754,13 @@ void MCP2515::clearERRIF()
     //clearInterrupts();
     modifyRegister(MCP_CANINTF, CANINTF_ERRIF, 0);
 }
+
+uint8_t MCP2515::errorCountRX(void)                             
+{
+    return readRegister(MCP_REC);
+}
+
+uint8_t MCP2515::errorCountTX(void)                             
+{
+    return readRegister(MCP_TEC);
+}
