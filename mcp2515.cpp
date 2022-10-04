@@ -9,33 +9,38 @@ const struct MCP2515::RXBn_REGS MCP2515::RXB[N_RXBUFFERS] = {
     {MCP_RXB0CTRL, MCP_RXB0SIDH, MCP_RXB0DATA, CANINTF_RX0IF},
     {MCP_RXB1CTRL, MCP_RXB1SIDH, MCP_RXB1DATA, CANINTF_RX1IF}};
 
-MCP2515::MCP2515(const uint8_t _CS, const uint32_t _SPI_CLOCK)
+MCP2515::MCP2515(spiSelect_t spiSelectFun,
+                 spiDeselect_t spiDeselectFun,
+                 spiTransfer_t spiTransferFun,
+                 delay_t delayFun)
 {
-  SPI.begin();
+  this->spiSelect = spiSelectFun;
+  this->spiDeselect = spiDeselectFun;
+  this->spiTransfer = spiTransferFun;
 
-  SPICS = _CS;
-  SPI_CLOCK = _SPI_CLOCK;
-  pinMode(SPICS, OUTPUT);
-  endSPI();
-}
+  if (delayFun == nullptr)
+  {
+    this->delay = [](uint32_t ms)
+    {
+      ms *= 5000;
+      for (uint32_t i = 0; i < ms; i++)
+      {
+      }
+    };
+  }
+  else
+  {
+    this->delay = delayFun;
+  }
 
-void MCP2515::startSPI()
-{
-  SPI.beginTransaction(SPISettings(SPI_CLOCK, MSBFIRST, SPI_MODE0));
-  digitalWrite(SPICS, LOW);
-}
-
-void MCP2515::endSPI()
-{
-  digitalWrite(SPICS, HIGH);
-  SPI.endTransaction();
+  spiDeselect();
 }
 
 MCP2515::ERROR MCP2515::reset(void)
 {
-  startSPI();
-  SPI.transfer(INSTRUCTION_RESET);
-  endSPI();
+  spiSelect();
+  spiTransfer(INSTRUCTION_RESET);
+  spiDeselect();
 
   delay(10);
 
@@ -88,65 +93,65 @@ MCP2515::ERROR MCP2515::reset(void)
 
 uint8_t MCP2515::readRegister(const REGISTER reg)
 {
-  startSPI();
-  SPI.transfer(INSTRUCTION_READ);
-  SPI.transfer(reg);
-  uint8_t ret = SPI.transfer(0x00);
-  endSPI();
+  spiSelect();
+  spiTransfer(INSTRUCTION_READ);
+  spiTransfer(reg);
+  uint8_t ret = spiTransfer(0x00);
+  spiDeselect();
 
   return ret;
 }
 
 void MCP2515::readRegisters(const REGISTER reg, uint8_t values[], const uint8_t n)
 {
-  startSPI();
-  SPI.transfer(INSTRUCTION_READ);
-  SPI.transfer(reg);
+  spiSelect();
+  spiTransfer(INSTRUCTION_READ);
+  spiTransfer(reg);
   // mcp2515 has auto-increment of address-pointer
   for (uint8_t i = 0; i < n; i++)
   {
-    values[i] = SPI.transfer(0x00);
+    values[i] = spiTransfer(0x00);
   }
-  endSPI();
+  spiDeselect();
 }
 
 void MCP2515::setRegister(const REGISTER reg, const uint8_t value)
 {
-  startSPI();
-  SPI.transfer(INSTRUCTION_WRITE);
-  SPI.transfer(reg);
-  SPI.transfer(value);
-  endSPI();
+  spiSelect();
+  spiTransfer(INSTRUCTION_WRITE);
+  spiTransfer(reg);
+  spiTransfer(value);
+  spiDeselect();
 }
 
 void MCP2515::setRegisters(const REGISTER reg, const uint8_t values[], const uint8_t n)
 {
-  startSPI();
-  SPI.transfer(INSTRUCTION_WRITE);
-  SPI.transfer(reg);
+  spiSelect();
+  spiTransfer(INSTRUCTION_WRITE);
+  spiTransfer(reg);
   for (uint8_t i = 0; i < n; i++)
   {
-    SPI.transfer(values[i]);
+    spiTransfer(values[i]);
   }
-  endSPI();
+  spiDeselect();
 }
 
 void MCP2515::modifyRegister(const REGISTER reg, const uint8_t mask, const uint8_t data)
 {
-  startSPI();
-  SPI.transfer(INSTRUCTION_BITMOD);
-  SPI.transfer(reg);
-  SPI.transfer(mask);
-  SPI.transfer(data);
-  endSPI();
+  spiSelect();
+  spiTransfer(INSTRUCTION_BITMOD);
+  spiTransfer(reg);
+  spiTransfer(mask);
+  spiTransfer(data);
+  spiDeselect();
 }
 
 uint8_t MCP2515::getStatus(void)
 {
-  startSPI();
-  SPI.transfer(INSTRUCTION_READ_STATUS);
-  uint8_t i = SPI.transfer(0x00);
-  endSPI();
+  spiSelect();
+  spiTransfer(INSTRUCTION_READ_STATUS);
+  uint8_t i = spiTransfer(0x00);
+  spiDeselect();
 
   return i;
 }
@@ -180,9 +185,8 @@ MCP2515::ERROR MCP2515::setMode(const CANCTRL_REQOP_MODE mode)
 {
   modifyRegister(MCP_CANCTRL, CANCTRL_REQOP, mode);
 
-  unsigned long endTime = millis() + 10;
   bool modeMatch = false;
-  while (millis() < endTime)
+  for (int i = 0; i < 50000; i++)
   {
     uint8_t newmode = readRegister(MCP_CANSTAT);
     newmode &= CANSTAT_OPMOD;
@@ -196,11 +200,6 @@ MCP2515::ERROR MCP2515::setMode(const CANCTRL_REQOP_MODE mode)
   }
 
   return modeMatch ? ERROR_OK : ERROR_FAIL;
-}
-
-MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed)
-{
-  return setBitrate(canSpeed, MCP_16MHZ);
 }
 
 MCP2515::ERROR MCP2515::setBitrate(const CAN_SPEED canSpeed, CAN_CLOCK canClock)

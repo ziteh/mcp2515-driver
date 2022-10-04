@@ -2,6 +2,7 @@
 #define MCP2515_H_
 
 #include "can.h"
+#include <cstring>
 
 /*
  *  Speed 8M
@@ -207,6 +208,11 @@ enum CAN_CLKOUT
 class MCP2515
 {
   public:
+  typedef void (*spiSelect_t)(void);
+  typedef void (*spiDeselect_t)(void);
+  typedef uint8_t (*spiTransfer_t)(uint8_t data);
+  typedef void (*delay_t)(uint32_t ms);
+
   enum ERROR
   {
     ERROR_OK = 0,
@@ -458,8 +464,10 @@ class MCP2515
   uint32_t SPI_CLOCK;
 
   private:
-  void startSPI();
-  void endSPI();
+  spiSelect_t spiSelect;
+  spiDeselect_t spiDeselect;
+  spiTransfer_t spiTransfer;
+  delay_t delay;
 
   ERROR setMode(const CANCTRL_REQOP_MODE mode);
 
@@ -472,7 +480,11 @@ class MCP2515
   void prepareId(uint8_t *buffer, const bool ext, const uint32_t id);
 
   public:
-  MCP2515(const uint8_t _CS, const uint32_t _SPI_CLOCK = DEFAULT_SPI_CLOCK);
+  MCP2515(spiSelect_t spiSelectFun,
+          spiDeselect_t spiDeselectFun,
+          spiTransfer_t spiTransferFun,
+          delay_t delayFun = nullptr);
+
   ERROR reset(void);
   ERROR setConfigMode();
   ERROR setListenOnlyMode();
@@ -480,8 +492,7 @@ class MCP2515
   ERROR setLoopbackMode();
   ERROR setNormalMode();
   ERROR setClkOut(const CAN_CLKOUT divisor);
-  ERROR setBitrate(const CAN_SPEED canSpeed);
-  ERROR setBitrate(const CAN_SPEED canSpeed, const CAN_CLOCK canClock);
+  ERROR setBitrate(const CAN_SPEED canSpeed, const CAN_CLOCK canClock = MCP_8MHZ);
   ERROR setFilterMask(const MASK num, const bool ext, const uint32_t ulData);
   ERROR setFilter(const RXF num, const bool ext, const uint32_t ulData);
   ERROR sendMessage(const TXBn txbn, const struct can_frame *frame);
