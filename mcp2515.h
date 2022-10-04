@@ -1,3 +1,13 @@
+/**
+ * @file mcp2515.h
+ * @brief Platform independent MCP2515 CAN interface library header file.
+ * @author Seeed Technology Inc.,
+ *         Dmitry,
+ *         ZiTe (honmonoh@gmail.com)
+ * @copyright MIT License.
+ * @remark This library was modified from 'autowp/arduino-mcp2515' (https://github.com/autowp/arduino-mcp2515).
+ */
+
 #ifndef MCP2515_H_
 #define MCP2515_H_
 

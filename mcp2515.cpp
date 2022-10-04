@@ -1,3 +1,13 @@
+/**
+ * @file mcp2515.cpp
+ * @brief Platform independent MCP2515 CAN interface library.
+ * @author Seeed Technology Inc.,
+ *         Dmitry,
+ *         ZiTe (honmonoh@gmail.com)
+ * @copyright MIT License.
+ * @remark This library was modified from 'autowp/arduino-mcp2515' (https://github.com/autowp/arduino-mcp2515).
+ */
+
 #include "mcp2515.h"
 #include "mcp2515_speed_cfg.h"
 #include <cstring>
