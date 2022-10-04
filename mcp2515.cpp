@@ -1,5 +1,6 @@
 #include "mcp2515.h"
 #include "mcp2515_speed_cfg.h"
+#include <cstring>
 
 const struct MCP2515::TXBn_REGS MCP2515::TXB[MCP2515::N_TXBUFFERS] = {
     {MCP_TXB0CTRL, MCP_TXB0SIDH, MCP_TXB0DATA},

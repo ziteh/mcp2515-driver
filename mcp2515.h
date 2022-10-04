@@ -2,7 +2,6 @@
 #define MCP2515_H_
 
 #include "can.h"
-#include <cstring>
 
 enum CAN_CLOCK
 {
