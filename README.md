@@ -1,60 +1,12 @@
-Arduino MCP2515 CAN interface library
----------------------------------------------------------
-[![Build Status](https://travis-ci.org/autowp/arduino-mcp2515.svg?branch=master)](https://travis-ci.org/autowp/arduino-mcp2515)
+# MCP2515 Driver
 
-<br>
-CAN-BUS is a common industrial bus because of its long travel distance, medium communication speed and high reliability. It is commonly found on modern machine tools and as an automotive diagnostic bus. This CAN-BUS Shield gives your Arduino/Seeeduino CAN-BUS capibility. With an OBD-II converter cable added on and the OBD-II library imported, you are ready to build an onboard diagnostic device or data logger.
+This is a platform independent MCP2515 CAN interface library.
 
-- Implements CAN V2.0B at up to 1 Mb/s
-- SPI Interface up to 10 MHz
-- Standard (11 bit) and extended (29 bit) data and remote frames
-- Two receive buffers with prioritized message storage
-
-**Contents:**
-* [Hardware](#hardware)
-   * [CAN Shield](#can-shield)
-   * [Do It Yourself](#do-it-yourself)
-* [Software Usage](#software-usage)
-   * [Library Installation](#library-installation)
-   * [Initialization](#initialization)
-   * [Frame data format](#frame-data-format)
-   * [Send Data](#send-data)
-   * [Receive Data](#receive-data)
-   * [Set Receive Mask and Filter](#set-receive-mask-and-filter)
-   * [Examples](#examples)
-
-# Hardware:
-
-## CAN Shield
-
-The following code samples uses the CAN-BUS Shield, wired up as shown:
-
-![MCP2515 CAN-Shield wiring](examples/wiring.png)
-
-## Do It Yourself
-
-If you want to make your own CAN board for under $10, you can achieve that with something like this:
-
-![MCP2515 with MCP2551 wiring](examples/wiring-diy.png)
-
-Component References:
-* [MCP2515](https://www.microchip.com/wwwproducts/en/MCP2515) Stand-Alone CAN Controller with SPI Interface
-* [MCP2551](https://www.microchip.com/wwwproducts/en/MCP2551) High-speed CAN Transceiver - pictured above, however "not recommended for new designs"
-* [MCP2562](https://www.microchip.com/wwwproducts/en/MCP2562) High-speed CAN Transceiver with Standby Mode and VIO Pin - an updated tranceiver since the _MCP2551_ (requires different wiring, read datasheet for example, also [here](https://fragmuffin.github.io/howto-micropython/slides/index.html#/7/5))
-* [TJA1055](https://www.nxp.com/docs/en/data-sheet/TJA1055.pdf) Fault-tolerant low speed CAN Transceiver. Mostly used in vehicles.
-
-
-# Software Usage:
-
-## Library Installation
-
-1. Download the ZIP file from https://github.com/autowp/arduino-mcp2515/archive/master.zip
-2. From the Arduino IDE: Sketch -> Include Library... -> Add .ZIP Library...
-3. Restart the Arduino IDE to see the new "mcp2515" library with examples
+> This library was modified under the MIT license from [autowp/arduino-mcp2515](https://github.com/autowp/arduino-mcp2515).
 
 ## Initialization
 
-To create connection with MCP2515 provide pin number where SPI CS is connected (10 by default), baudrate and mode
+To create connection with MCP2515 provide SPI control functions, baudrate and mode.
 
 The available modes are listed as follows:
 ```C++
@@ -62,6 +14,7 @@ mcp2515.setNormalMode();
 mcp2515.setLoopbackMode();
 mcp2515.setListenOnlyMode();
 ```
+
 The available baudrates are listed as follows:
 ```C++
 enum CAN_SPEED {
@@ -84,28 +37,42 @@ enum CAN_SPEED {
 };
 ```
 
-
-Example of initialization
-
+Example of initialization:
 ```C++
-MCP2515 mcp2515(10);
-mcp2515.reset();
-mcp2515.setBitrate(CAN_125KBPS);
-mcp2515.setLoopbackMode();
+void spiSelect(void)
+{
+  gpio_clear(GPIO_CS_PORT, GPIO_CS_PIN); /* CS pin low. */
+}
+
+void spiDeselect(void)
+{
+  while (!(SPI_SR(SPI1) & SPI_SR_TXE));
+  while ((SPI_SR(SPI1) & SPI_SR_BSY));
+  gpio_set(GPIO_CS_PORT, GPIO_CS_PIN); /* CS pin high. */
+}
+
+uint8_t spiTransfer(uint8_t data)
+{
+  uint16_t rec = spi_xfer(SPI1, data); /* SPI data write and read. */
+  return rec & 0xFF;
+}
+
+void mcp2515Init(void)
+{
+  MCP2515 mcp2515(&spiSelect, &spiDeselect, &spiTransfer, &delay);
+
+  mcp2515.reset();
+  mcp2515.setBitrate(CAN_125KBPS);
+  mcp2515.setNormalMode();
+}
 ```
 
-<br>
-
-<br>
 You can also set oscillator frequency for module when setting bitrate:
-
 ```C++
-mcp2515.setBitrate(CAN_125KBPS, MCP_8MHZ);
+mcp2515.setBitrate(CAN_125KBPS, MCP_16MHZ);
 ```
 
-<br>
 The available clock speeds are listed as follows:
-
 ```C++
 enum CAN_CLOCK {
     MCP_20MHZ,
@@ -114,10 +81,9 @@ enum CAN_CLOCK {
 };
 ```
 
-Default value is MCP_16MHZ
-<br>
+Default value is `MCP_8MHZ`
 
-Note: To transfer data on high speed of CAN interface via UART dont forget to update UART baudrate as necessary.
+*Note*: To transfer data on high speed of CAN interface via UART dont forget to update UART baudrate as necessary.
 
 ## Frame data format
 
@@ -169,8 +135,6 @@ frame.data[1] = 0xFF;
 tell other devices this is a extended frame from 0x12345678. */
 mcp2515.sendMessage(MCP2515::TXB1, &frame);
 ```
-
-
 
 ## Receive Data
 
@@ -245,35 +209,27 @@ MCP2515::ERROR setFilterMask(const MASK mask, const bool ext, const uint32_t ulD
 MCP2515::ERROR setFilter(const RXF num, const bool ext, const uint32_t ulData)
 ```
 
-**MASK mask** represents one of two mask **MCP2515::MASK0** or **MCP2515::MASK1**
+**MASK mask** represents one of two mask `MCP2515::MASK0` or `MCP2515::MASK1`
 
-**RXF num** represents one of six acceptance filters registers from **MCP2515::RXF0** to **MCP2515::RXF5**
+**RXF num** represents one of six acceptance filters registers from `MCP2515::RXF0` to `MCP2515::RXF5`
 
-**ext** represents the status of the frame. **false** means it's a mask or filter for a standard frame. **true** means it's for a extended frame.
+**ext** represents the status of the frame. `false` means it's a mask or filter for a standard frame. `true` means it's for a extended frame.
 
 **ulData** represents the content of the mask of filter.
 
-
-## Examples
-
-Example implementation of CanHacker (lawicel) protocol based device: [https://github.com/autowp/can-usb](https://github.com/autowp/can-usb)
-
-
-For more information, please refer to [wiki page](http://www.seeedstudio.com/wiki/CAN-BUS_Shield) .
-
-
 ----
 
-This software is written by loovee ([luweicong@seeed.cc](luweicong@seeed.cc "luweicong@seeed.cc")) for seeed studio,<br>
-Updated by Dmitry ([https://github.com/autowp](https://github.com/autowp "https://github.com/autowp"))<br>
-and is licensed under [The MIT License](http://opensource.org/licenses/mit-license.php). Check [LICENSE.md](LICENSE.md) for more information.<br>
+This software is written by loovee ([luweicong@seeed.cc](luweicong@seeed.cc "luweicong@seeed.cc")) for seeed studio,  
+Updated by Dmitry ([https://github.com/autowp](https://github.com/autowp "https://github.com/autowp")),  
+Modified by ZiTe ([https://github.com/ziteh](https://github.com/ziteh)),  
+and is licensed under [The MIT License](http://opensource.org/licenses/mit-license.php). Check [`LICENSE`](LICENSE) for more information.  
 
-Contributing to this software is warmly welcomed. You can do this basically by<br>
-[forking](https://help.github.com/articles/fork-a-repo), committing modifications and then [pulling requests](https://help.github.com/articles/using-pull-requests) (follow the links above<br>
-for operating guide). Adding change log and your contact into file header is encouraged.<br>
+Contributing to this software is warmly welcomed. You can do this basically by  
+[forking](https://help.github.com/articles/fork-a-repo), committing modifications and then [pulling requests](https://help.github.com/articles/using-pull-requests) (follow the links above  
+for operating guide). Adding change log and your contact into file header is encouraged.  
 Thanks for your contribution.
 
-Seeed Studio is an open hardware facilitation company based in Shenzhen, China. <br>
-Benefiting from local manufacture power and convenient global logistic system, <br>
-we integrate resources to serve new era of innovation. Seeed also works with <br>
-global distributors and partners to push open hardware movement.<br>
+Seeed Studio is an open hardware facilitation company based in Shenzhen, China.  
+Benefiting from local manufacture power and convenient global logistic system,  
+we integrate resources to serve new era of innovation. Seeed also works with  
+global distributors and partners to push open hardware movement.  
