@@ -4,6 +4,13 @@ This is a platform independent MCP2515 CAN interface library.
 
 > This library was modified under the MIT license from [autowp/arduino-mcp2515](https://github.com/autowp/arduino-mcp2515).
 
+## SPI Config
+
+- SPI mode 0 (CPOL=0, CPHA=0) or/and 1 (CPOL=1, CPHA=1).
+- Data frame format: 8-bit.
+- Data order: MSB first.
+- Max speed: 10 MHz.
+
 ## Initialization
 
 To create connection with MCP2515 provide SPI control functions, baudrate and mode.
