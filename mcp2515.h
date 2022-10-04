@@ -1,7 +1,6 @@
 #ifndef MCP2515_H_
 #define MCP2515_H_
 
-#include <SPI.h>
 #include "can.h"
 
 /*
