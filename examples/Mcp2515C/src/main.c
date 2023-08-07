@@ -74,30 +74,27 @@ static void int_pin_setup(void)
     nvic_enable_irq(INT_IRQ);
 }
 
-uint8_t mcp2515_spi_transfer(uint8_t data);
 void mcp2515_select(void);
 void mcp2515_deselect(void);
-void delay_ms(uint32_t ms);
-void mcp2515_delay(void);
+uint8_t mcp2515_spi_transfer(uint8_t data);
+void mcp2515_delay_ms(uint32_t ms);
 
-
-
+mcp2515_handle_t mcp2515;
 int main(void)
 {
     rcc_setup();
     spi_setup();
     int_pin_setup();
 
-    mcp2515_handle_t mcp2515;
     mcp2515_make_handle(&mcp2515_select,
                         &mcp2515_deselect,
                         &mcp2515_spi_transfer,
-                        &mcp2515_delay,
+                        &mcp2515_delay_ms,
                         &mcp2515);
 
-    mcp2515_reset();
-    setBitrate(CAN_125KBPS, MCP_8MHZ);
-    setNormalMode();
+    mcp2515_reset(&mcp2515);
+    mcp2515_setBitrate(&mcp2515, CAN_125KBPS, MCP_8MHZ);
+    mcp2515_setNormalMode(&mcp2515);
 
     can_frame_t tx_frame_1 =
         {
@@ -129,11 +126,11 @@ int main(void)
         };
     while (1)
     {
-        sendMessage(&tx_frame_1);
-        delay_ms(1000);
+        mcp2515_sendMessage(&mcp2515, &tx_frame_1);
+        mcp2515_delay_ms(1000);
 
-        sendMessage(&tx_frame_2);
-        delay_ms(1000);
+        mcp2515_sendMessage(&mcp2515, &tx_frame_2);
+        mcp2515_delay_ms(1000);
     }
     return 0;
 }
@@ -161,7 +158,7 @@ uint8_t mcp2515_spi_transfer(uint8_t data)
     return rec & 0xFF;
 }
 
-void delay_ms(uint32_t ms)
+void mcp2515_delay_ms(uint32_t ms)
 {
     for (; ms > 0; ms--)
     {
@@ -172,30 +169,25 @@ void delay_ms(uint32_t ms)
     }
 }
 
-void mcp2515_delay(void)
-{
-    delay_ms(1);
-}
-
 /* INT pin interrupt handler. */
 void exti9_5_isr(void)
 {
     can_frame_t rx_frame;
-    uint8_t irq = getInterrupts();
+    uint8_t irq = mcp2515_getInterrupts(&mcp2515);
     if (irq & CANINTF_RX0IF)
     {
-        if (readMessage_RXBn(RXB0, &rx_frame) == ERROR_OK)
+        if (mcp2515_readMessage_RXBn(&mcp2515, RXB0, &rx_frame) == ERROR_OK)
         {
             rx_frame.can_id = 0x0F0;
-            sendMessage(&rx_frame);
+            mcp2515_sendMessage(&mcp2515, &rx_frame);
         }
     }
     if (irq & CANINTF_RX1IF)
     {
-        if (readMessage_RXBn(RXB1, &rx_frame) == ERROR_OK)
+        if (mcp2515_readMessage_RXBn(&mcp2515, RXB1, &rx_frame) == ERROR_OK)
         {
             rx_frame.can_id = 0x0F1;
-            sendMessage(&rx_frame);
+            mcp2515_sendMessage(&mcp2515, &rx_frame);
         }
     }
 

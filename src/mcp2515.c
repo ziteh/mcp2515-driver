@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include "mcp2515.h"
 #include "mcp2515_speed_cfg.h"
-#include <cstring>
+#include <string.h>
 
 #define N_TXBUFFERS (3)
 #define N_RXBUFFERS (2)
@@ -141,6 +141,7 @@ typedef enum
     MCP_RXB1DATA = 0x76
 } REGISTER;
 
+static const uint8_t CANCTRL_REQOP = 0xE0;
 static const uint8_t CANCTRL_ABAT = 0x10;
 static const uint8_t CANCTRL_OSM = 0x08;
 static const uint8_t CANCTRL_CLKEN = 0x04;
@@ -178,20 +179,8 @@ static const uint8_t STAT_RXIF_MASK = STAT_RX0IF | STAT_RX1IF;
 static const uint8_t EFLG_ERRORMASK = EFLG_RX1OVR | EFLG_RX0OVR | EFLG_TXBO | EFLG_TXEP | EFLG_RXEP;
 static const uint32_t DEFAULT_SPI_CLOCK = 10000000; // 10MHz
 
-static const struct TXBn_REGS
-{
-    REGISTER CTRL;
-    REGISTER SIDH;
-    REGISTER DATA;
-} TXB[N_TXBUFFERS];
-
-static const struct RXBn_REGS
-{
-    REGISTER CTRL;
-    REGISTER SIDH;
-    REGISTER DATA;
-    CANINTF CANINTF_RXnIF;
-} RXB[N_RXBUFFERS];
+uint8_t SPICS;
+uint32_t SPI_CLOCK;
 
 ERROR setMode(const mcp2515_handle_t *mcp2515_handle, const CANCTRL_REQOP_MODE mode);
 uint8_t readRegister(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg);
@@ -199,31 +188,29 @@ void readRegisters(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg, u
 void setRegister(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg, const uint8_t value);
 void setRegisters(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg, const uint8_t values[], const uint8_t n);
 void modifyRegister(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg, const uint8_t mask, const uint8_t data);
-void prepareId(const mcp2515_handle_t *mcp2515_handle, uint8_t *buffer, const bool ext, const uint32_t id);
-uint8_t getStatus(const mcp2515_handle_t *mcp2515_handle);
-uint8_t getErrorFlags(const mcp2515_handle_t *mcp2515_handle);
-bool checkReceive(const mcp2515_handle_t *mcp2515_handle);
-bool checkError(const mcp2515_handle_t *mcp2515_handle);
-uint8_t errorCountTX(const mcp2515_handle_t *mcp2515_handle);
-uint8_t errorCountRX(const mcp2515_handle_t *mcp2515_handle);
-void clearERRIF(const mcp2515_handle_t *mcp2515_handle);
-void clearMERR(const mcp2515_handle_t *mcp2515_handle);
-void clearRXnOVR(const mcp2515_handle_t *mcp2515_handle);
-void clearInterrupts(const mcp2515_handle_t *mcp2515_handle);
-uint8_t getInterruptMask(const mcp2515_handle_t *mcp2515_handle);
-void clearTXInterrupts(const mcp2515_handle_t *mcp2515_handle);
-void clearRXnOVRFlags(const mcp2515_handle_t *mcp2515_handle);
-uint8_t getInterrupts(const mcp2515_handle_t *mcp2515_handle);
+void prepareId(uint8_t *buffer, const bool ext, const uint32_t id);
 
-static const uint8_t CANCTRL_REQOP = 0xE0;
+typedef const struct
+{
+    REGISTER CTRL;
+    REGISTER SIDH;
+    REGISTER DATA;
+} TXBn_REGS_t;
 
-const struct TXBn_REGS TXB[] =
-    {
-        {MCP_TXB0CTRL, MCP_TXB0SIDH, MCP_TXB0DATA},
-        {MCP_TXB1CTRL, MCP_TXB1SIDH, MCP_TXB1DATA},
-        {MCP_TXB2CTRL, MCP_TXB2SIDH, MCP_TXB2DATA}};
+TXBn_REGS_t TXB[N_TXBUFFERS] = {
+    {MCP_TXB0CTRL, MCP_TXB0SIDH, MCP_TXB0DATA},
+    {MCP_TXB1CTRL, MCP_TXB1SIDH, MCP_TXB1DATA},
+    {MCP_TXB2CTRL, MCP_TXB2SIDH, MCP_TXB2DATA}};
 
-const struct RXBn_REGS RXB[] = {
+typedef const struct
+{
+    REGISTER CTRL;
+    REGISTER SIDH;
+    REGISTER DATA;
+    CANINTF CANINTF_RXnIF;
+} RXBn_REGS_t;
+
+RXBn_REGS_t RXB[N_RXBUFFERS] = {
     {MCP_RXB0CTRL, MCP_RXB0SIDH, MCP_RXB0DATA, CANINTF_RX0IF},
     {MCP_RXB1CTRL, MCP_RXB1SIDH, MCP_RXB1DATA, CANINTF_RX1IF}};
 
@@ -366,7 +353,7 @@ void modifyRegister(const mcp2515_handle_t *mcp2515_handle,
     mcp2515_handle->spi_deselect();
 }
 
-uint8_t getStatus(const mcp2515_handle_t *mcp2515_handle)
+uint8_t mcp2515_getStatus(const mcp2515_handle_t *mcp2515_handle)
 {
     mcp2515_handle->spi_select();
     mcp2515_handle->spi_transfer(INSTRUCTION_READ_STATUS);
@@ -716,8 +703,8 @@ ERROR mcp2515_setBitrate(const mcp2515_handle_t *mcp2515_handle,
     }
 }
 
-ERROR setClkOut(const mcp2515_handle_t *mcp2515_handle,
-                const CAN_CLKOUT divisor)
+ERROR mcp2515_setClkOut(const mcp2515_handle_t *mcp2515_handle,
+                        const CAN_CLKOUT divisor)
 {
     if (divisor == CLKOUT_DISABLE)
     {
@@ -740,7 +727,7 @@ ERROR setClkOut(const mcp2515_handle_t *mcp2515_handle,
     return ERROR_OK;
 }
 
-void prepareId(const mcp2515_handle_t *mcp2515_handle, uint8_t *buffer, const bool ext, const uint32_t id)
+void prepareId(uint8_t *buffer, const bool ext, const uint32_t id)
 {
     uint16_t canid = (uint16_t)(id & 0x0FFFF);
 
@@ -775,7 +762,7 @@ ERROR mcp2515_setFilterMask(const mcp2515_handle_t *mcp2515_handle,
     }
 
     uint8_t tbufdata[4];
-    prepareId(mcp2515_handle, tbufdata, ext, ulData);
+    prepareId(tbufdata, ext, ulData);
 
     REGISTER reg;
     switch (mask)
@@ -833,7 +820,7 @@ ERROR mcp2515_setFilter(const mcp2515_handle_t *mcp2515_handle,
     }
 
     uint8_t tbufdata[4];
-    prepareId(mcp2515_handle, tbufdata, ext, ulData);
+    prepareId(tbufdata, ext, ulData);
     setRegisters(mcp2515_handle, reg, tbufdata, 4);
 
     return ERROR_OK;
@@ -848,7 +835,7 @@ ERROR mcp2515_sendMessage_TXBn(const mcp2515_handle_t *mcp2515_handle,
         return ERROR_FAILTX;
     }
 
-    const struct TXBn_REGS *txbuf = &TXB[txbn];
+    const TXBn_REGS_t *txbuf = &TXB[txbn];
 
     uint8_t data[13];
 
@@ -856,7 +843,7 @@ ERROR mcp2515_sendMessage_TXBn(const mcp2515_handle_t *mcp2515_handle,
     bool rtr = (frame->can_id & CAN_RTR_FLAG);
     uint32_t id = (frame->can_id & (ext ? CAN_EFF_MASK : CAN_SFF_MASK));
 
-    prepareId(mcp2515_handle, data, ext, id);
+    prepareId(data, ext, id);
 
     data[MCP_DLC] = rtr ? (frame->can_dlc | RTR_MASK) : frame->can_dlc;
 
@@ -886,23 +873,22 @@ ERROR mcp2515_sendMessage(const mcp2515_handle_t *mcp2515_handle,
 
     for (int i = 0; i < N_TXBUFFERS; i++)
     {
-        const struct TXBn_REGS *txbuf = &TXB[txBuffers[i]];
+        const TXBn_REGS_t *txbuf = &TXB[txBuffers[i]];
         uint8_t ctrlval = readRegister(mcp2515_handle, txbuf->CTRL);
         if ((ctrlval & TXB_TXREQ) == 0)
         {
-            return sendMessage(mcp2515_handle, txBuffers[i], frame);
+            return mcp2515_sendMessage_TXBn(mcp2515_handle, txBuffers[i], frame);
         }
     }
 
     return ERROR_ALLTXBUSY;
 }
 
-ERROR readMessage(const mcp2515_handle_t *mcp2515_handle,
-                  const RXBn rxbn,
-                  struct can_frame *frame)
+ERROR mcp2515_readMessage_RXBn(const mcp2515_handle_t *mcp2515_handle,
+                               const RXBn rxbn,
+                               struct can_frame *frame)
 {
-    const struct RXBn_REGS *rxb = &RXB[rxbn];
-
+    const RXBn_REGS_t *rxb = &RXB[rxbn];
     uint8_t tbufdata[5];
 
     readRegisters(mcp2515_handle, rxb->SIDH, tbufdata, 5);
@@ -939,19 +925,19 @@ ERROR readMessage(const mcp2515_handle_t *mcp2515_handle,
     return ERROR_OK;
 }
 
-ERROR readMessage(const mcp2515_handle_t *mcp2515_handle,
-                  struct can_frame *frame)
+ERROR mcp2515_readMessage(const mcp2515_handle_t *mcp2515_handle,
+                          struct can_frame *frame)
 {
     ERROR rc;
-    uint8_t stat = getStatus(mcp2515_handle);
+    uint8_t stat = mcp2515_getStatus(mcp2515_handle);
 
     if (stat & STAT_RX0IF)
     {
-        rc = readMessage(mcp2515_handle, RXB0, frame);
+        rc = mcp2515_readMessage_RXBn(mcp2515_handle, RXB0, frame);
     }
     else if (stat & STAT_RX1IF)
     {
-        rc = readMessage(mcp2515_handle, RXB1, frame);
+        rc = mcp2515_readMessage_RXBn(mcp2515_handle, RXB1, frame);
     }
     else
     {
@@ -961,9 +947,9 @@ ERROR readMessage(const mcp2515_handle_t *mcp2515_handle,
     return rc;
 }
 
-bool checkReceive(const mcp2515_handle_t *mcp2515_handle)
+bool mcp2515_checkReceive(const mcp2515_handle_t *mcp2515_handle)
 {
-    uint8_t res = getStatus(mcp2515_handle);
+    uint8_t res = mcp2515_getStatus(mcp2515_handle);
     if (res & STAT_RXIF_MASK)
     {
         return true;
@@ -974,9 +960,9 @@ bool checkReceive(const mcp2515_handle_t *mcp2515_handle)
     }
 }
 
-bool checkError(const mcp2515_handle_t *mcp2515_handle)
+bool mcp2515_checkError(const mcp2515_handle_t *mcp2515_handle)
 {
-    uint8_t eflg = getErrorFlags(mcp2515_handle);
+    uint8_t eflg = mcp2515_getErrorFlags(mcp2515_handle);
 
     if (eflg & EFLG_ERRORMASK)
     {
@@ -988,67 +974,67 @@ bool checkError(const mcp2515_handle_t *mcp2515_handle)
     }
 }
 
-uint8_t getErrorFlags(const mcp2515_handle_t *mcp2515_handle)
+uint8_t mcp2515_getErrorFlags(const mcp2515_handle_t *mcp2515_handle)
 {
     return readRegister(mcp2515_handle, MCP_EFLG);
 }
 
-void clearRXnOVRFlags(const mcp2515_handle_t *mcp2515_handle)
+void mcp2515_clearRXnOVRFlags(const mcp2515_handle_t *mcp2515_handle)
 {
     modifyRegister(mcp2515_handle, MCP_EFLG, EFLG_RX0OVR | EFLG_RX1OVR, 0);
 }
 
-uint8_t getInterrupts(const mcp2515_handle_t *mcp2515_handle)
+uint8_t mcp2515_getInterrupts(const mcp2515_handle_t *mcp2515_handle)
 {
     return readRegister(mcp2515_handle, MCP_CANINTF);
 }
 
-void clearInterrupts(const mcp2515_handle_t *mcp2515_handle)
+void mcp2515_clearInterrupts(const mcp2515_handle_t *mcp2515_handle)
 {
     setRegister(mcp2515_handle, MCP_CANINTF, 0);
 }
 
-uint8_t getInterruptMask(const mcp2515_handle_t *mcp2515_handle)
+uint8_t mcp2515_getInterruptMask(const mcp2515_handle_t *mcp2515_handle)
 {
     return readRegister(mcp2515_handle, MCP_CANINTE);
 }
 
-void clearTXInterrupts(const mcp2515_handle_t *mcp2515_handle)
+void mcp2515_clearTXInterrupts(const mcp2515_handle_t *mcp2515_handle)
 {
     modifyRegister(mcp2515_handle, MCP_CANINTF, (CANINTF_TX0IF | CANINTF_TX1IF | CANINTF_TX2IF), 0);
 }
 
-void clearRXnOVR(const mcp2515_handle_t *mcp2515_handle)
+void mcp2515_clearRXnOVR(const mcp2515_handle_t *mcp2515_handle)
 {
-    uint8_t eflg = getErrorFlags(mcp2515_handle);
+    uint8_t eflg = mcp2515_getErrorFlags(mcp2515_handle);
     if (eflg != 0)
     {
-        clearRXnOVRFlags(mcp2515_handle);
-        clearInterrupts(mcp2515_handle);
+        mcp2515_clearRXnOVRFlags(mcp2515_handle);
+        mcp2515_clearInterrupts(mcp2515_handle);
         // modifyRegister(MCP_CANINTF, CANINTF_ERRIF, 0);
     }
 }
 
-void clearMERR(const mcp2515_handle_t *mcp2515_handle)
+void mcp2515_clearMERR(const mcp2515_handle_t *mcp2515_handle)
 {
     // modifyRegister(MCP_EFLG, EFLG_RX0OVR | EFLG_RX1OVR, 0);
-    // clearInterrupts();
+    // mcp2515_clearInterrupts();
     modifyRegister(mcp2515_handle, MCP_CANINTF, CANINTF_MERRF, 0);
 }
 
-void clearERRIF(const mcp2515_handle_t *mcp2515_handle)
+void mcp2515_clearERRIF(const mcp2515_handle_t *mcp2515_handle)
 {
     // modifyRegister(MCP_EFLG, EFLG_RX0OVR | EFLG_RX1OVR, 0);
-    // clearInterrupts();
+    // mcp2515_clearInterrupts();
     modifyRegister(mcp2515_handle, MCP_CANINTF, CANINTF_ERRIF, 0);
 }
 
-uint8_t errorCountRX(const mcp2515_handle_t *mcp2515_handle)
+uint8_t mcp2515_errorCountRX(const mcp2515_handle_t *mcp2515_handle)
 {
     return readRegister(mcp2515_handle, MCP_REC);
 }
 
-uint8_t errorCountTX(const mcp2515_handle_t *mcp2515_handle)
+uint8_t mcp2515_errorCountTX(const mcp2515_handle_t *mcp2515_handle)
 {
     return readRegister(mcp2515_handle, MCP_TEC);
 }

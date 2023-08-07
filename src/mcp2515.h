@@ -49,6 +49,22 @@
     CLKOUT_DIV8 = 0x3,
   }CAN_CLKOUT;
 
+  typedef enum  
+  {
+    ERROR_OK = 0,
+    ERROR_FAIL = 1,
+    ERROR_ALLTXBUSY = 2,
+    ERROR_FAILINIT = 3,
+    ERROR_FAILTX = 4,
+    ERROR_NOMSG = 5
+  }ERROR;
+
+  typedef enum 
+  {
+    MASK0,
+    MASK1
+  }MASK;
+
   typedef enum 
     {
       RXF0 = 0,
@@ -72,21 +88,6 @@
     TXB2 = 2
   }TXBn;
 
-  typedef enum  
-  {
-    ERROR_OK = 0,
-    ERROR_FAIL = 1,
-    ERROR_ALLTXBUSY = 2,
-    ERROR_FAILINIT = 3,
-    ERROR_FAILTX = 4,
-    ERROR_NOMSG = 5
-  }ERROR;
-
-  typedef enum 
-  {
-    MASK0,
-    MASK1
-  }MASK;
   
   typedef enum  
   {
@@ -112,20 +113,10 @@
     EFLG_EWARN = (1 << 0)
   }EFLG;
 
-  typedef enum 
-  {
-    CANCTRL_REQOP_NORMAL = 0x00,
-    CANCTRL_REQOP_SLEEP = 0x20,
-    CANCTRL_REQOP_LOOPBACK = 0x40,
-    CANCTRL_REQOP_LISTENONLY = 0x60,
-    CANCTRL_REQOP_CONFIG = 0x80,
-    CANCTRL_REQOP_POWERUP = 0xE0
-  }CANCTRL_REQOP_MODE;
-
 typedef void (*mcp2515_spi_select_t)(void);
 typedef void (*mcp2515_spi_deselect_t)(void);
 typedef uint8_t  (*mcp2515_spi_transfer_t)(uint8_t data);
-typedef void (*mcp2515_delay_ms_t)(void);
+typedef void (*mcp2515_delay_ms_t)(uint32_t ms);
 
 
 typedef struct 
@@ -151,7 +142,7 @@ int8_t mcp2515_make_handle(
   ERROR mcp2515_setLoopbackMode(const mcp2515_handle_t *mcp2515_handle);
   ERROR mcp2515_setNormalMode(const mcp2515_handle_t *mcp2515_handle);
   ERROR mcp2515_setClkOut(const mcp2515_handle_t *mcp2515_handle,const CAN_CLKOUT divisor);
-  ERROR mcp2515_setBitrate(const mcp2515_handle_t *mcp2515_handle,const CAN_SPEED canSpeed, const CAN_CLOCK canClock = MCP_8MHZ);
+  ERROR mcp2515_setBitrate(const mcp2515_handle_t *mcp2515_handle,const CAN_SPEED canSpeed, const CAN_CLOCK canClock);
   ERROR mcp2515_setFilterMask(const mcp2515_handle_t *mcp2515_handle,const MASK num, const bool ext, const uint32_t ulData);
   ERROR mcp2515_setFilter(const mcp2515_handle_t *mcp2515_handle,const RXF num, const bool ext, const uint32_t ulData);
   ERROR mcp2515_sendMessage_TXBn(const mcp2515_handle_t *mcp2515_handle,const TXBn txbn, const  can_frame_t *frame);
@@ -161,16 +152,21 @@ int8_t mcp2515_make_handle(
 
   bool mcp2515_checkReceive(const mcp2515_handle_t *mcp2515_handle);
   bool mcp2515_checkError(const mcp2515_handle_t *mcp2515_handle);
+
   uint8_t mcp2515_getErrorFlags(const mcp2515_handle_t *mcp2515_handle);
   void mcp2515_clearRXnOVRFlags(const mcp2515_handle_t *mcp2515_handle);
+
   uint8_t mcp2515_getInterrupts(const mcp2515_handle_t *mcp2515_handle);
   uint8_t mcp2515_getInterruptMask(const mcp2515_handle_t *mcp2515_handle);
   void mcp2515_clearInterrupts(const mcp2515_handle_t *mcp2515_handle);
   void mcp2515_clearTXInterrupts(const mcp2515_handle_t *mcp2515_handle);
+
   uint8_t mcp2515_getStatus(const mcp2515_handle_t *mcp2515_handle);
+
   void mcp2515_clearRXnOVR(const mcp2515_handle_t *mcp2515_handle);
   void mcp2515_clearMERR(const mcp2515_handle_t *mcp2515_handle);
   void mcp2515_clearERRIF(const mcp2515_handle_t *mcp2515_handle);
+
   uint8_t mcp2515_errorCountRX(const mcp2515_handle_t *mcp2515_handle);
   uint8_t mcp2515_errorCountTX(const mcp2515_handle_t *mcp2515_handle);
 
