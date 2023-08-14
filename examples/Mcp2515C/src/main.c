@@ -17,13 +17,16 @@
 #define USART_BAUDRATE (9600)
 
 /* USART2 use the same PORT with SPI1*/
+#define SPI1_USART2_PORT (GPIOA)
+
+/* USART2 */
 #define RCC_USART_TX_GPIO (RCC_GPIOA)
 #define RCC_ENABLE_USART_NUM (RCC_USART2)
 #define GPIO_USART_TX_PIN (GPIO2) /* Arduino-D1. */
 #define GPIO_USART_AF (GPIO_AF7)  /* Table-11 in DS10693 */
 #define CHOSEN_USART_NUM (USART2)
 
-#define SPI_PORT (GPIOA)
+/* SPI1 */
 #define SPI_SCK_PIN (GPIO5)  /* Arduino-D13 pin. */
 #define SPI_MISO_PIN (GPIO6) /* Arduino-D12 pin. */
 #define SPI_MOSI_PIN (GPIO7) /* Arduino-D11 pin. */
@@ -58,12 +61,12 @@ static void rcc_setup(void)
 static void usart_setup(void)
 {
     /* Set USART-Tx pin to alternate function. */
-    gpio_mode_setup(SPI_PORT,
+    gpio_mode_setup(SPI1_USART2_PORT,
                     GPIO_MODE_AF,
                     GPIO_PUPD_NONE,
                     GPIO_USART_TX_PIN);
 
-    gpio_set_af(SPI_PORT,
+    gpio_set_af(SPI1_USART2_PORT,
                 GPIO_USART_AF,
                 GPIO_USART_TX_PIN);
 
@@ -80,17 +83,17 @@ static void usart_setup(void)
 
 static void spi_setup(void)
 {
-    gpio_mode_setup(SPI_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, SPI_CS_PIN);
+    gpio_mode_setup(SPI1_USART2_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, SPI_CS_PIN);
 
-    gpio_mode_setup(SPI_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, SPI_SCK_PIN | SPI_MISO_PIN | SPI_MOSI_PIN);
+    gpio_mode_setup(SPI1_USART2_PORT, GPIO_MODE_AF, GPIO_PUPD_NONE, SPI_SCK_PIN | SPI_MISO_PIN | SPI_MOSI_PIN);
 
-    gpio_set_af(SPI_PORT, SPI_AF, SPI_SCK_PIN | SPI_MISO_PIN | SPI_MOSI_PIN); //
-    gpio_set_output_options(SPI_PORT,
+    gpio_set_af(SPI1_USART2_PORT, SPI_AF, SPI_SCK_PIN | SPI_MISO_PIN | SPI_MOSI_PIN); //
+    gpio_set_output_options(SPI1_USART2_PORT,
                             GPIO_OTYPE_PP,
                             GPIO_OSPEED_50MHZ,
                             SPI_SCK_PIN | SPI_MOSI_PIN | SPI_CS_PIN); //
 
-    gpio_set(SPI_PORT, SPI_CS_PIN); /* Deselect. */
+    gpio_set(SPI1_USART2_PORT, SPI_CS_PIN); /* Deselect. */
 
     uint32_t spi = SPI1;
     spi_disable(spi);
@@ -150,6 +153,7 @@ can_frame_t tx_frame_2 =
         .data[6] = 0xF7,
         .data[7] = 0xF8,
 };
+can_frame_t Receieve_frame;
 int main(void)
 {
     rcc_setup();
@@ -163,12 +167,8 @@ int main(void)
                         &mcp2515_delay_ms,
                         &mcp2515);
 
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 1000; i++)
     {
-        mcp2515_reset(&mcp2515);
-        mcp2515_setBitrate(&mcp2515, CAN_125KBPS, MCP_8MHZ);
-        mcp2515_setNormalMode(&mcp2515);
-
         if (mcp2515_reset(&mcp2515) != ERROR_OK)
         {
             printf("mcp2515_reset FAILED\r\n");
@@ -181,24 +181,39 @@ int main(void)
             printf("retry %d times\r\n", i + 1);
             continue;
         }
+
         if (mcp2515_setNormalMode(&mcp2515) != ERROR_OK)
         {
             printf("mcp2515_setNormalMode FAILED\r\n");
             printf("retry %d times\r\n", i + 1);
             continue;
         }
-        printf("All SUSSES start Send\r\n");
+        printf("All SUCCESS start Send\r\n");
         mcp2515_delay_ms(100);
         break;
     }
 
     while (1)
     {
-        mcp2515_sendMessage(&mcp2515, &tx_frame_1);
-        mcp2515_delay_ms(1000);
+        /*　ＳＥＮＤ　ＦＲＡＭＥ　*/
+        // mcp2515_sendMessage(&mcp2515, &tx_frame_1);
+        // mcp2515_delay_ms(1000);
 
-        mcp2515_sendMessage(&mcp2515, &tx_frame_2);
-        mcp2515_delay_ms(1000);
+        // mcp2515_sendMessage(&mcp2515, &tx_frame_2);
+        // mcp2515_delay_ms(1000);
+
+        /* ＲＥＡＤ ＦＲＡＭＥ */
+        if (mcp2515_readMessage(&mcp2515, &Receieve_frame) == ERROR_OK)
+        {
+            printf("%x ", Receieve_frame.can_id);
+            printf("%x ", Receieve_frame.can_dlc);
+            for (int i = 0; i < Receieve_frame.can_dlc; i++)
+            { // print the data
+                printf("%x ", Receieve_frame.data[i]);
+            }
+            printf(" \r\n");
+            mcp2515_delay_ms(100);
+        }
     }
     return 0;
 }
@@ -212,12 +227,12 @@ void mcp2515_deselect(void)
     {
     }
 
-    gpio_set(SPI_PORT, SPI_CS_PIN); /* CS pin output high to deselect. */
+    gpio_set(SPI1_USART2_PORT, SPI_CS_PIN); /* CS pin output high to deselect. */
 }
 
 void mcp2515_select(void)
 {
-    gpio_clear(SPI_PORT, SPI_CS_PIN); /* CS pin output low to select. */
+    gpio_clear(SPI1_USART2_PORT, SPI_CS_PIN); /* CS pin output low to select. */
 }
 
 uint8_t mcp2515_spi_transfer(uint8_t data)

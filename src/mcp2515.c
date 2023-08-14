@@ -183,6 +183,7 @@ uint8_t SPICS;
 uint32_t SPI_CLOCK;
 
 ERROR setMode(const mcp2515_handle_t *mcp2515_handle, const CANCTRL_REQOP_MODE mode);
+
 uint8_t readRegister(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg);
 void readRegisters(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg, uint8_t values[], const uint8_t n);
 void setRegister(const mcp2515_handle_t *mcp2515_handle, const REGISTER reg, const uint8_t value);
@@ -345,7 +346,7 @@ void modifyRegister(const mcp2515_handle_t *mcp2515_handle,
                     const uint8_t mask,
                     const uint8_t data)
 {
-    mcp2515_handle->spi_deselect();
+    mcp2515_handle->spi_select();
     mcp2515_handle->spi_transfer(INSTRUCTION_BITMOD);
     mcp2515_handle->spi_transfer(reg);
     mcp2515_handle->spi_transfer(mask);
