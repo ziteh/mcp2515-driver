@@ -985,6 +985,9 @@ void mcp2515_clearRXnOVRFlags(const mcp2515_handle_t *mcp2515_handle)
   modifyRegister(mcp2515_handle, MCP_EFLG, EFLG_RX0OVR | EFLG_RX1OVR, 0);
 }
 
+/// @brief A function to get which CANINTF reg generate a INT
+/// @param mcp2515_handle
+/// @return
 uint8_t mcp2515_getInterrupts(const mcp2515_handle_t *mcp2515_handle)
 {
   return readRegister(mcp2515_handle, MCP_CANINTF);

@@ -4,10 +4,10 @@
  * @author ZhengKF (minchen9292@gmail.com)
  */
 /* SELECT MODE */
-// #define SEND_MODE
+#define SEND_MODE
 // #define READ_MODE
 // #define IRQ_MODE
-#define TEST_MODE
+// #define TEST_MODE
 
 #include <errno.h>
 #include <libopencm3/stm32/usart.h>
@@ -48,6 +48,7 @@ uint8_t mcp2515_spi_transfer(uint8_t data);
 void mcp2515_delay_ms(uint32_t ms);
 int _write(int file, char *ptr, int len);
 bool mcp2515_compare_frame(can_frame_t frame1, can_frame_t frame2);
+void mcp2515_print_can_frame(can_frame_t can_frame);
 
 static void rcc_setup(void)
 {
@@ -74,7 +75,9 @@ static void usart_setup(void)
   usart_set_flow_control(CHOSEN_USART_NUM, USART_FLOWCONTROL_NONE);
   usart_set_mode(CHOSEN_USART_NUM, USART_MODE_TX); /* Tx-Only mode. */
   usart_enable(CHOSEN_USART_NUM);
-
+}
+static void gpio_setup()
+{
   gpio_mode_setup(SPI1_USART2_PORT, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, OUTPUT_PIN);
   gpio_set_output_options(SPI1_USART2_PORT,
                           GPIO_OTYPE_PP,
@@ -112,6 +115,7 @@ static void int_pin_setup(void)
   exti_enable_request(INT_EXTI);
   nvic_enable_irq(INT_IRQ);
 }
+
 mcp2515_handle_t mcp2515;
 can_frame_t tx_frame_1 = {
     .can_id = 0x01,
@@ -150,11 +154,13 @@ can_frame_t permit_frame = {
     .data[7] = 0xF8,
 };
 can_frame_t Receieve_frame;
+int SendTimes = 0;
 
 int main(void)
 {
   rcc_setup();
   spi_setup();
+  gpio_setup();
   int_pin_setup();
   usart_setup();
   mcp2515_make_handle(&mcp2515_select, &mcp2515_deselect, &mcp2515_spi_transfer, &mcp2515_delay_ms, &mcp2515);
@@ -186,70 +192,45 @@ int main(void)
   while (1)
   {
 #if defined(SEND_MODE)
+    if (SendTimes % 10 == 0 && SendTimes > 0)
+    {
+      printf("Send %d times", SendTimes);
+      printf(" \r\n");
+    }
     mcp2515_sendMessage(&mcp2515, &tx_frame_1);
-    mcp2515_delay_ms(1000);
+    mcp2515_delay_ms(100);
     mcp2515_sendMessage(&mcp2515, &tx_frame_2);
-    mcp2515_delay_ms(1000);
+    mcp2515_delay_ms(100);
+    SendTimes += 1;
 #elif defined(READ_MODE)
-
     if (mcp2515_readMessage(&mcp2515, &Receieve_frame) == ERROR_OK)
     {
       if (Receieve_frame.can_id == 0 && Receieve_frame.can_dlc == 0)
       {
-        printf(".");  // Didn't read any frame
+        printf(".");  // Bus line is empty
       }
-      printf("%x ", Receieve_frame.can_id);
-      printf("%x ", Receieve_frame.can_dlc);
-      /* print the data */
-      for (int i = 0; i < Receieve_frame.can_dlc; i++)
+      else
       {
-        printf("%x ", Receieve_frame.data[i]);
+        mcp2515_print_can_frame(Receieve_frame);
       }
-      printf(" \r\n");
-      mcp2515_delay_ms(10000);
     }
     else
     {
       printf("mcp2515_readMessage FAILED\r\n");
-      mcp2515_delay_ms(10000);
     }
+    mcp2515_delay_ms(100);
 #elif defined(IRQ_MODE)
-    mcp2515_delay_ms(5000);
-    printf("Send");
-    bool state;
-    do {
-      gpio_set(SPI1_USART2_PORT, OUTPUT_PIN);
-      gpio_clear(SPI1_USART2_PORT, OUTPUT_PIN);
-      mcp2515_sendMessage(&mcp2515, &tx_frame_1);
-      if (mcp2515_readMessage(&mcp2515, &Receieve_frame) == ERROR_OK)
-      {
-        state = mcp2515_compare_frame(tx_frame_1, Receieve_frame);
-        /* If true Send a permit frame to Slave */
-        if (state)
-        {
-          gpio_set(SPI1_USART2_PORT, OUTPUT_PIN);
-          gpio_clear(SPI1_USART2_PORT, OUTPUT_PIN);
-          mcp2515_sendMessage(&mcp2515, &permit_frame);
-        }
-        else
-        {
-          printf("Frame Failed");
-          printf(" \r\n");
-        }
-      }
-      else
-      {
-        printf("mcp2515_readMessage Failed");
-        printf(" \r\n");
-      }
 
-    } while (!state);
+    /* 此模式全部再exti裡面完成，主程式不會需要任何程式 */
+
 #elif defined(TEST_MODE)
-    gpio_toggle(SPI1_USART2_PORT, OUTPUT_PIN);
+    gpio_set(SPI1_USART2_PORT, OUTPUT_PIN);
+    gpio_clear(SPI1_USART2_PORT, OUTPUT_PIN);
+    // gpio_toggle(SPI1_USART2_PORT, OUTPUT_PIN);
     printf("=");
     printf("\r\n");
     mcp2515_sendMessage(&mcp2515, &tx_frame_1);
-    mcp2515_delay_ms(5000);
+    mcp2515_delay_ms(100);
 #endif
   }  // while(1)
 }  // main
@@ -257,13 +238,15 @@ int main(void)
 /* INT pin interrupt handler. */
 void exti9_5_isr(void)
 {
+  printf("=");
+  printf("\r\n");
   can_frame_t rx_frame;
   uint8_t irq = mcp2515_getInterrupts(&mcp2515);
   if (irq & CANINTF_RX0IF)
   {
     if (mcp2515_readMessage_RXBn(&mcp2515, RXB0, &rx_frame) == ERROR_OK)
     {
-      rx_frame.can_id = 0x0F0;
+      mcp2515_print_can_frame(rx_frame);
       mcp2515_sendMessage(&mcp2515, &rx_frame);
     }
   }
@@ -271,9 +254,24 @@ void exti9_5_isr(void)
   {
     if (mcp2515_readMessage_RXBn(&mcp2515, RXB1, &rx_frame) == ERROR_OK)
     {
-      rx_frame.can_id = 0x0F1;
+      mcp2515_print_can_frame(rx_frame);
       mcp2515_sendMessage(&mcp2515, &rx_frame);
     }
+  }
+  if (irq & CANINTF_TX0IF)
+  {
+    printf("TX0IF");
+    printf("\r\n");
+  }
+  else if (irq & CANINTF_TX1IF)
+  {
+    printf("TX1IF");
+    printf("\r\n");
+  }
+  else if (irq & CANINTF_TX2IF)
+  {
+    printf("TX2IF");
+    printf("\r\n");
   }
   exti_reset_request(INT_EXTI);
 }
@@ -327,18 +325,32 @@ int _write(int file, char *ptr, int len)
 
 bool mcp2515_compare_frame(can_frame_t frame1, can_frame_t frame2)
 {
-  if (frame1.can_id == frame2.can_id ||
-      frame1.can_dlc == frame2.can_dlc ||
-      frame1.data[0] == frame2.data[0] ||
-      frame1.data[1] == frame2.data[1] ||
-      frame1.data[2] == frame2.data[2] ||
-      frame1.data[3] == frame2.data[3] ||
-      frame1.data[4] == frame2.data[4] ||
-      frame1.data[5] == frame2.data[5] ||
-      frame1.data[6] == frame2.data[6] ||
+  if (frame1.can_id == frame2.can_id &&
+      frame1.can_dlc == frame2.can_dlc &&
+      frame1.data[0] == frame2.data[0] &&
+      frame1.data[1] == frame2.data[1] &&
+      frame1.data[2] == frame2.data[2] &&
+      frame1.data[3] == frame2.data[3] &&
+      frame1.data[4] == frame2.data[4] &&
+      frame1.data[5] == frame2.data[5] &&
+      frame1.data[6] == frame2.data[6] &&
       frame1.data[7] == frame2.data[7])
-
+  {
     return true;
-
-  return false;
+  }
+  else
+  {
+    return false;
+  }
+}
+void mcp2515_print_can_frame(can_frame_t can_frame)
+{
+  printf("%x ", can_frame.can_id);
+  printf("%x ", can_frame.can_dlc);
+  /* print the data */
+  for (int i = 0; i < can_frame.can_dlc; i++)
+  {
+    printf("%x ", can_frame.data[i]);
+  }
+  printf(" \r\n");
 }
