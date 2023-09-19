@@ -2,7 +2,8 @@
     "files.associations": {
         "usart.h": "c",
         "exti.h": "c",
-        "errno.h": "c"
+        "errno.h": "c",
+        "nvic.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
