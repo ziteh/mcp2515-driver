@@ -3,7 +3,8 @@
         "usart.h": "c",
         "exti.h": "c",
         "errno.h": "c",
-        "nvic.h": "c"
+        "nvic.h": "c",
+        "mcp2515_communication.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }
