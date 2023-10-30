@@ -25,6 +25,10 @@ void usart_setup(void)
               GPIO_USART_AF,
               GPIO_USART_TX_PIN | GPIO_USART_RX_PIN);
 
+  /* Setup interrupt. */
+  nvic_enable_irq(NVIC_USART2_IRQ);
+  usart_enable_rx_interrupt(USART2); /* Enable receive interrupt. */
+
   /* Config USART params. */
   usart_set_baudrate(USART2, USART_BAUDRATE);
   usart_set_databits(USART2, 8);
