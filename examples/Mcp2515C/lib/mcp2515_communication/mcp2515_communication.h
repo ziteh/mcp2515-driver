@@ -17,12 +17,12 @@
 
 /* USART2 */
 #define USART_BAUDRATE (115200)
-#define RCC_USART_TXRX_PORT (RCC_GPIOA)
-#define RCC_ENABLE_USART_NUM (RCC_USART2)
+#define RCC_USART2_TXRX_PORT (RCC_GPIOA)
+#define RCC_ENABLE_USART2 (RCC_USART2)
 #define USART2_TXRX_PORT (GPIOA)
-#define GPIO_USART_TX_PIN (GPIO2) /* Arduino-D1. */
-#define GPIO_USART_RX_PIN (GPIO3) /* Arduino-D0. */
-#define GPIO_USART_AF (GPIO_AF7)  /* Table-11 in DS10693 */
+#define GPIO_USART2_TX_PIN (GPIO2) /* Arduino-D1. */
+#define GPIO_USART2_RX_PIN (GPIO3) /* Arduino-D0. */
+#define GPIO_USART2_AF (GPIO_AF7)  /* Table-11 in DS10693 */
 
 /* SPI1 */
 #define RCC_SPI_PORT (GPIOA)
@@ -37,7 +37,7 @@
 #define INT_EXTI (EXTI7)
 #define INT_IRQ (NVIC_EXTI9_5_IRQ)
 
-void usart_setup(void);
+void usart2_setup(void);
 void mcp2515_setup(void);
 bool mcp2515_init(const mcp2515_handle_t *mcp2515_handle);
 

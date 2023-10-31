@@ -11,19 +11,19 @@
 void spi_setup(void);
 void int_pin_setup(void);
 
-void usart_setup(void)
+void usart2_setup(void)
 {
-  rcc_periph_clock_enable(RCC_USART_TXRX_PORT);
-  rcc_periph_clock_enable(RCC_ENABLE_USART_NUM);
+  rcc_periph_clock_enable(RCC_USART2_TXRX_PORT);
+  rcc_periph_clock_enable(RCC_ENABLE_USART2);
   /* Set USART-Tx pin to alternate function. */
   gpio_mode_setup(USART2_TXRX_PORT,
                   GPIO_MODE_AF,
                   GPIO_PUPD_NONE,
-                  GPIO_USART_TX_PIN | GPIO_USART_RX_PIN);
+                  GPIO_USART2_TX_PIN | GPIO_USART2_RX_PIN);
 
   gpio_set_af(USART2_TXRX_PORT,
-              GPIO_USART_AF,
-              GPIO_USART_TX_PIN | GPIO_USART_RX_PIN);
+              GPIO_USART2_AF,
+              GPIO_USART2_TX_PIN | GPIO_USART2_RX_PIN);
 
   /* Setup interrupt. */
   nvic_enable_irq(NVIC_USART2_IRQ);

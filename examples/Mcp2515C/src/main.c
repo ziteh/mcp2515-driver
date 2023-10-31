@@ -9,7 +9,6 @@
 // #define IRQ_MODE
 // #define TEST_MODE
 
-
 #include <stdio.h>
 #include "libopencm3/cm3/nvic.h"
 #include "libopencm3/stm32/exti.h"
@@ -25,7 +24,8 @@ int SendTimes = 0;
 int main(void)
 {
   mcp2515_setup();
-  usart_setup();
+  usart2_setup();
+      printf("INIT SUCCESS\r\n");
   mcp2515_make_handle(&mcp2515_select, &mcp2515_deselect, &mcp2515_spi_transfer, &mcp2515_delay_ms, &mcp2515);
   if (mcp2515_init(&mcp2515))
   {
